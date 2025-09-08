@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.env
+.git
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+data/*
+
+# Keep a sample env for docs if you want:
+!.env.example
