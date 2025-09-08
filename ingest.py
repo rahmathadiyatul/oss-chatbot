@@ -10,10 +10,10 @@ load_dotenv()
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-VECTOR_BACKEND = os.getenv("VECTOR_BACKEND", "qdrant").lower()
-DATA_DIR = os.getenv("PDF_DIR", "./data")
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1200"))
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
+VECTOR_BACKEND = os.getenv("VECTOR_BACKEND").lower()
+DATA_DIR = os.getenv("PDF_DIR")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP"))
 
 # utils
 def _require(name: str) -> str:
@@ -55,9 +55,9 @@ def ingest_qdrant(chunks):
 
     QDRANT_URL = _require("QDRANT_URL").rstrip("/")
     QDRANT_API_KEY = _require("QDRANT_API_KEY")
-    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "pdfs")
+    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION")
 
-    HF_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    HF_MODEL = os.getenv("EMBEDDING_MODEL")
     print(f"[qdrant] Using HF embedding model: {HF_MODEL}")
     embeddings = HuggingFaceEmbeddings(model_name=HF_MODEL)
 

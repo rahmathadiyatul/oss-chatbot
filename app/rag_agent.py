@@ -32,8 +32,8 @@ def _env(name: str, required: bool = True) -> Optional[str]:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return v
 
-PROVIDER_LLM = os.getenv("PROVIDER_LLM", "groq").lower()        # azure | groq
-PROVIDER_VS  = os.getenv("PROVIDER_VS", "qdrant").lower()       # azure | qdrant
+PROVIDER_LLM = os.getenv("PROVIDER_LLM").lower()        # azure | groq
+PROVIDER_VS  = os.getenv("PROVIDER_VS").lower()       # azure | qdrant
 
 # Tavily
 _TAVILY = os.environ.get("TAVILY_API_KEY")
@@ -76,10 +76,10 @@ elif PROVIDER_VS == "qdrant":
     from qdrant_client import QdrantClient
     from langchain_community.vectorstores import Qdrant
 
-    HF_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    HF_MODEL = os.getenv("EMBEDDING_MODEL")
     QDRANT_URL = _env("QDRANT_URL")
     QDRANT_API_KEY = _env("QDRANT_API_KEY")
-    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "pdfs")
+    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION")
 
     embeddings = HuggingFaceEmbeddings(model_name=HF_MODEL)
 
@@ -121,7 +121,7 @@ if PROVIDER_LLM == "azure":
 elif PROVIDER_LLM == "groq":
     from langchain_groq import ChatGroq
     GROQ_API_KEY = _env("GROQ_API_KEY")
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    GROQ_MODEL = os.getenv("GROQ_MODEL")
 
     llm = ChatGroq(
         api_key=GROQ_API_KEY,
