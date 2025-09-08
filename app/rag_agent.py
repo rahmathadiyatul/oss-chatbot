@@ -19,17 +19,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain.tools.retriever import create_retriever_tool
 
-# --------------------------
 # State
-# --------------------------
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     question: Sequence
     chat_history: Sequence
 
-# --------------------------
 # Env & switches
-# --------------------------
 def _env(name: str, required: bool = True) -> Optional[str]:
     v = os.environ.get(name)
     if required and not v:
@@ -42,16 +38,13 @@ PROVIDER_VS  = os.getenv("PROVIDER_VS", "qdrant").lower()       # azure | qdrant
 # Tavily
 _TAVILY = os.environ.get("TAVILY_API_KEY")
 
-# --------------------------
 # Vector store + Embeddings
-# --------------------------
 retriever = None
 doc_prompt = PromptTemplate.from_template(
     "<context>\n{page_content}\n\n<meta>\nsource: {source}\npage: {page}\n</meta>\n</context>"
 )
 
 if PROVIDER_VS == "azure":
-    # Azure AI Search + Azure embeddings
     from langchain_openai import AzureOpenAIEmbeddings
     from langchain_community.vectorstores import AzureSearch
 
@@ -79,7 +72,6 @@ if PROVIDER_VS == "azure":
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})
 
 elif PROVIDER_VS == "qdrant":
-    # Qdrant Cloud + HF embeddings
     from langchain_community.embeddings import HuggingFaceEmbeddings
     from qdrant_client import QdrantClient
     from langchain_community.vectorstores import Qdrant
@@ -107,9 +99,7 @@ elif PROVIDER_VS == "qdrant":
 else:
     raise RuntimeError(f"Unsupported PROVIDER_VS: {PROVIDER_VS}")
 
-# --------------------------
 # LLMs
-# --------------------------
 LLM_SUPPORTS_TOOLS = False
 
 if PROVIDER_LLM == "azure":
@@ -126,7 +116,6 @@ if PROVIDER_LLM == "azure":
         timeout=None,
         max_retries=2,
     )
-    # Azure supports LC tool-calling
     LLM_SUPPORTS_TOOLS = True
 
 elif PROVIDER_LLM == "groq":
@@ -140,15 +129,12 @@ elif PROVIDER_LLM == "groq":
         temperature=0,
         max_retries=2,
     )
-    # ChatGroq tool-calling support is not assumed; use manual path
     LLM_SUPPORTS_TOOLS = False
 
 else:
     raise RuntimeError(f"Unsupported PROVIDER_LLM: {PROVIDER_LLM}")
 
-# --------------------------
 # Utilities
-# --------------------------
 def _normalize_messages(msgs: Sequence) -> List[BaseMessage]:
     out: List[BaseMessage] = []
     for m in msgs:
@@ -215,9 +201,7 @@ def _get_tool_context(state: AgentState, limit_chars: int = 2500) -> str:
     text = "\n\n".join(parts).strip()
     return text[:limit_chars] if len(text) > limit_chars else text
 
-# --------------------------
 # Tools
-# --------------------------
 retriever_tool = create_retriever_tool(
     retriever,
     name="retrieve_internal_knowledge",
@@ -282,9 +266,7 @@ def web_search_tool(query: str) -> str:
 pdf_tools = [retriever_tool]
 web_tools = [web_search_tool]
 
-# --------------------------
 # Nodes
-# --------------------------
 def route_decider(state: AgentState) -> Literal["clarify", "pdf", "web"]:
     q = ""
     try:
@@ -324,7 +306,6 @@ def agent_pdf(state: AgentState):
         llm_with_tools = llm.bind_tools(pdf_tools)
         return {"messages": [llm_with_tools.invoke(msgs)]}
 
-    # Manual path (no tool-calling): run retriever here, stash as ToolMessage for grading
     q = _get_question(state)
     try:
         docs = retriever.get_relevant_documents(q, k=4)
@@ -346,7 +327,6 @@ def agent_web(state: AgentState):
         llm_with_tools = llm.bind_tools(web_tools)
         return {"messages": [llm_with_tools.invoke(msgs)]}
 
-    # Manual path (no tool-calling): call web tool now
     q = _get_question(state)
     try:
         web_out = web_search_tool.invoke(q)
@@ -399,7 +379,6 @@ def generate(state: AgentState):
         out = llm.invoke(msgs)
         return {"messages": [out]}
 
-    # Manual generate for LLMs without tool support (Groq): build a clean prompt
     q = _get_question(state)
     ctx = _get_tool_context(state)
     history = _history_no_tools(state)
@@ -411,7 +390,7 @@ def generate(state: AgentState):
     final_prompt = "\n\n".join(prompt_parts)
 
     msgs = [SystemMessage(content="You are a helpful research assistant.")]
-    msgs.extend(history[-6:])   # keep last few turns
+    msgs.extend(history[-6:])
     msgs.append(HumanMessage(content=final_prompt))
 
     out = llm.invoke(msgs)
@@ -437,9 +416,7 @@ def structure_metadata_to_json(text: str) -> List[Dict[str, Union[str, int]]]:
             items.append({"source": source, "page": page})
     return items
 
-# --------------------------
 # Graph
-# --------------------------
 workflow = StateGraph(AgentState)
 
 workflow.add_node("router", router_node)
