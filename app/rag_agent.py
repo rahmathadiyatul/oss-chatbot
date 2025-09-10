@@ -32,8 +32,8 @@ def _env(name: str, required: bool = True) -> Optional[str]:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return v
 
-PROVIDER_LLM = os.getenv("PROVIDER_LLM").lower()        # azure | groq
-PROVIDER_VS  = os.getenv("PROVIDER_VS").lower()       # azure | qdrant
+PROVIDER_LLM = os.getenv("PROVIDER").lower()        # azure | groq
+PROVIDER_VS  = os.getenv("VECTOR_BACKEND").lower()       # azure | qdrant
 
 # Tavily
 _TAVILY = os.environ.get("TAVILY_API_KEY")
